@@ -11,17 +11,16 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import base64
 from openai import OpenAI
-import json
 
 photo_taken = False
 
-class ObjectDetection:
+class ImageRecognition:
 
     def __init__(self):
 
         self.client = OpenAI(
             api_key = "Insert your API Key here",
-            base_url = "https://api.openai.com/v1",
+            base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1",
         )
         
         self.bridge = CvBridge()
@@ -41,12 +40,12 @@ class ObjectDetection:
             print(e)
 
     def get_response(self):
-        prompt = "Use bounding boxes to locate each object in the image. Output the coordinates of all bounding boxes with the object labels in JSON format, use label as the name of label and bbox_2d as the name of the bounding box for the objects JSON. Show only the final JSON output without the ```json```."
+        prompt = "What is in this image?"
         with open("photo.png", "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode("utf-8")
 
         completion = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="qwen-vl-max-latest",
             messages=[
                 {
                     "role": "user",
@@ -58,38 +57,15 @@ class ObjectDetection:
             ],
         )
 
-        self.result = completion.choices[0].message.content
-        rospy.loginfo(self.result)
-        self.update_photo()
-
-    def update_photo(self):
-        data = json.loads(self.result)
-        objects = data["objects"]
-        image = cv2.imread("photo.png")
-
-        for obj in objects:
-            bbox = obj['bbox_2d']
-            label = obj['label']
-            
-            x_min, y_min, x_max, y_max = bbox
-            color = (255, 0, 0)
-            
-            # Draw rectangle
-            cv2.rectangle(image, (x_min, y_min), (x_max, y_max), color, 2)
-            
-            # Put label text above the bounding box
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(image, label, (x_min, y_min - 10), font, 0.5, color, 2)
-
-        # Save and display output
-        cv2.imwrite('output_photo.png', image)
-        cv2.imshow('Annotated Image', image)
+        rospy.loginfo(completion.choices[0].message.content)
+        cv_photo = cv2.imread("photo.png")
+        cv2.imshow('Photo',cv_photo)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
 
     # Initialize
-    rospy.init_node('take_photo', anonymous=False)
-    ObjectDetection()
+    rospy.init_node('image_recognition', anonymous=False)
+    ImageRecognition()
     rospy.spin()

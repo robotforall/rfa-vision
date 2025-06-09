@@ -21,7 +21,7 @@ class ObjectDetection:
 
         self.client = OpenAI(
             api_key = "Insert your API Key here",
-            base_url = "https://api.openai.com/v1",
+            base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1",
         )
         
         self.bridge = CvBridge()
@@ -46,7 +46,7 @@ class ObjectDetection:
             base64_image = base64.b64encode(image_file.read()).decode("utf-8")
 
         completion = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="qwen-vl-max-latest",
             messages=[
                 {
                     "role": "user",
